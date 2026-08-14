@@ -1,0 +1,16 @@
+<div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:shadow-md">
+  <p class="text-sm font-medium text-slate-500">{{ label() }}</p>
+  <p
+    class="mt-2 text-2xl font-bold"
+    [class.text-slate-800]="accent() === 'slate'"
+    [class.text-green-600]="accent() === 'green'"
+    [class.text-red-500]="accent() === 'red'"
+    [class.text-blue-600]="accent() === 'blue'"
+    [class.text-amber-600]="accent() === 'amber'"
+  >
+    {{ value() ?? '—' }}
+  </p>
+  @if (hint()) {
+    <p class="mt-1 text-xs text-slate-400">{{ hint() }}</p>
+  }
+</div>

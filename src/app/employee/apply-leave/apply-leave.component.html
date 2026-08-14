@@ -1,0 +1,135 @@
+@if (loadingData()) {
+  <div class="flex h-64 items-center justify-center">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-800"></div>
+  </div>
+} @else if (loadError()) {
+  <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800 shadow-sm">
+    <p class="font-semibold">Leave data failed to load</p>
+    <p class="mt-2">{{ loadError() }}</p>
+    <button type="button" (click)="retryLoad()" class="mt-4 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700">
+      Retry
+    </button>
+  </div>
+} @else {
+<section class="leave-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Leave portal</p>
+      <h1>Apply Leave</h1>
+    </div>
+
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      {{ remainingLeaveDays() }} days remaining
+    </div>
+  </div>
+
+  <!-- Summary cards removed as requested -->
+
+  <div class="content-grid">
+    <form [formGroup]="leaveForm" (ngSubmit)="submitLeave()" class="form-card" novalidate>
+      <!-- helper-banner removed per request -->
+
+      <div class="form-header">
+          <h2>New leave request</h2>
+        </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="leaveType">Leave type</label>
+          <select id="leaveType" formControlName="leaveType">
+            <option value="CASUAL">Casual Leave {{ getLeaveOptionText('CASUAL') }}</option>
+            <option value="SICK">Sick Leave {{ getLeaveOptionText('SICK') }}</option>
+            <option value="EARNED">Earned Leave {{ getLeaveOptionText('EARNED') }}</option>
+          </select>
+          <small *ngIf="leaveForm.get('leaveType')?.touched && leaveForm.get('leaveType')?.hasError('required')" class="error-text">Leave type is required.</small>
+        </div>
+
+        <div class="field">
+          <label for="dayType">Day type</label>
+          <select id="dayType" formControlName="dayType">
+            <option value="FULL_DAY">Full Day</option>
+            <option value="HALF_DAY">Half Day</option>
+          </select>
+        </div>
+
+        <div *ngIf="(leaveForm.get('dayType')?.value ?? 'FULL_DAY') === 'HALF_DAY'" class="field">
+          <label for="halfDaySession">Half-day session</label>
+          <select id="halfDaySession" formControlName="halfDaySession">
+            <option value="FIRST_HALF">First Half</option>
+            <option value="SECOND_HALF">Second Half</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="startDate">From</label>
+          <input id="startDate" type="date" formControlName="startDate" />
+          <small *ngIf="leaveForm.get('startDate')?.touched && leaveForm.get('startDate')?.hasError('required')" class="error-text">Start date is required.</small>
+        </div>
+
+        <div class="field">
+          <label for="endDate">To</label>
+          <input id="endDate" type="date" formControlName="endDate" />
+          <small *ngIf="leaveForm.get('endDate')?.touched && leaveForm.get('endDate')?.hasError('required')" class="error-text">End date is required.</small>
+        </div>
+      </div>
+
+      <div class="field textarea-field">
+        <label for="reason">Reason</label>
+        <textarea
+          id="reason"
+          rows="4"
+          formControlName="reason"
+          placeholder="Share a short reason for this leave request"
+        ></textarea>
+
+        <small *ngIf="leaveForm.get('reason')?.touched && leaveForm.get('reason')?.hasError('required')" class="error-text">
+          Reason is required.
+        </small>
+        <small *ngIf="leaveForm.get('reason')?.touched && leaveForm.get('reason')?.hasError('minlength')" class="error-text">
+          Reason must be at least 10 characters long.
+        </small>
+      </div>
+
+      <div *ngIf="leaveForm.hasError('invalidDateRange') && (leaveForm.get('startDate')?.touched || leaveForm.get('endDate')?.touched)" class="error-banner">End date cannot be earlier than the start date.</div>
+
+      <div class="form-actions">
+        <p>Requests are reviewed by the manager within 1 business day.</p>
+
+        <div class="button-group">
+          <button type="button" class="secondary-btn" (click)="resetForm()">Reset</button>
+          <button type="submit" class="primary-btn" [disabled]="leaveForm.invalid || submitting()">
+            {{ submitting() ? 'Submitting...' : 'Submit request' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <aside class="side-panel">
+      <div class="mini-card">
+        <h3>Recent requests</h3>
+
+        <div class="request-list">
+          <div *ngIf="recentRequests().length === 0" style="padding: 1rem 0; color: var(--slate-500); font-size: 0.85rem; text-align: center;">
+            No recent requests
+          </div>
+          <div *ngFor="let request of recentRequests()" class="request-item">
+            <div class="request-main">
+              <div>
+                <p class="request-type">{{ request.type }}</p>
+                <span class="request-date">
+                  {{ request.startDate | date:'MMM d' }} - {{ request.endDate | date:'MMM d, y' }}
+                </span>
+              </div>
+            </div>
+
+            <small>{{ request.days }} day(s)</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick info removed as requested -->
+    </aside>
+  </div>
+</section>
+}

@@ -1,0 +1,229 @@
+<section class="leave-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Manager portal</p>
+      <h1>Leave approvals</h1>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="recycle-bin-button" aria-label="Recycle bin" (click)="showRecycleBin.set(!showRecycleBin())">
+        <span class="trash-icon">🗑</span>
+        @if (recycleBinCount() > 0) {
+          <span class="bin-badge">{{ recycleBinCount() }}</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (showRecycleBin() && recycleBinEntries().length) {
+    <div class="recycle-panel">
+      <div class="recycle-header">
+        <h3>Recently deleted</h3>
+        <span>Restore within 48 hours</span>
+      </div>
+
+      @for (deleted of recycleBinEntries(); track deleted.id) {
+        <div class="recycle-row">
+          <div>
+            <strong>{{ deleted.request.employeeName }}</strong>
+            <small>{{ deleted.request.leaveType }} · {{ deleted.request.days }} day(s)</small>
+          </div>
+          <div class="recycle-meta">
+            <span>{{ getTimeLeftText(deleted) }}</span>
+            <button type="button" class="restore-btn" (click)="restoreDeletedRequest(deleted.id)">Restore</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="toolbar">
+    <div class="filter-group" role="tablist" aria-label="Leave filter">
+      <button type="button" [class.active]="filterStatus() === 'PENDING'" (click)="updateFilter('PENDING')">Pending</button>
+      <button type="button" [class.active]="filterStatus() === 'APPROVED'" (click)="updateFilter('APPROVED')">Approved</button>
+      <button type="button" [class.active]="filterStatus() === 'REJECTED'" (click)="updateFilter('REJECTED')">Rejected</button>
+      <button type="button" [class.active]="filterStatus() === 'ALL'" (click)="updateFilter('ALL')">All</button>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <div class="card-topline">
+        <span class="label">Pending</span>
+        <span class="chip amber">Review</span>
+      </div>
+      <div class="card-metric">
+        <strong>{{ summary().pending }}</strong>
+        <span>awaiting action</span>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="card-topline">
+        <span class="label">Approved</span>
+        <span class="chip teal">Closed</span>
+      </div>
+      <div class="card-metric">
+        <strong>{{ summary().approved }}</strong>
+        <span>this cycle</span>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="card-topline">
+        <span class="label">Rejected</span>
+        <span class="chip rose">No</span>
+      </div>
+      <div class="card-metric">
+        <strong>{{ summary().rejected }}</strong>
+        <span>declined</span>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="card-topline">
+        <span class="label">Total</span>
+        <span class="chip blue">Queue</span>
+      </div>
+      <div class="card-metric">
+        <strong>{{ summary().total }}</strong>
+        <span>requests</span>
+      </div>
+    </article>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-toolbar-left">
+        <div class="filter-field search-field">
+          <span class="search-icon">⌕</span>
+          <input
+            type="text"
+            placeholder=""
+            [value]="searchInput()"
+            (input)="searchInput.set($any($event.target).value)"
+            (keydown.enter)="applySearch()"
+          />
+          <button type="button" class="search-button" aria-label="Search" (click)="applySearch()">⌕</button>
+        </div>
+
+        <label class="filter-field">
+          <span>Start date</span>
+          <input type="date" [value]="startDate()" (change)="startDate.set($any($event.target).value); currentPage.set(1)" />
+        </label>
+
+        <label class="filter-field">
+          <span>End date</span>
+          <input type="date" [value]="endDate()" (change)="endDate.set($any($event.target).value); currentPage.set(1)" />
+        </label>
+
+        <label class="filter-field">
+          <span>Leave type</span>
+          <select [value]="leaveTypeFilter()" (change)="leaveTypeFilter.set($any($event.target).value); currentPage.set(1)">
+            <option value="ALL">All</option>
+            <option value="CASUAL">Casual</option>
+            <option value="SICK">Sick</option>
+            <option value="EARNED">Earned</option>
+          </select>
+        </label>
+      </div>
+
+      <span class="total-badge">{{ filteredRequests().length }} shown</span>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <p>Loading leave requests…</p>
+      </div>
+    } @else if (filteredRequests().length === 0) {
+      <div class="empty-box">
+        <h3>No matching leave requests</h3>
+        <p>There are no requests in the selected status right now.</p>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Leave Type</th>
+              <th>Period</th>
+              <th>Days</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (request of paginatedRequests(); track request.id) {
+              <tr>
+                <td>
+                  <div class="employee-cell">
+                    <strong>{{ request.employeeName }}</strong>
+                    <span>{{ request.designation }}</span>
+                    <small>{{ request.email }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="type-stack">
+                    <strong>{{ request.leaveType }}</strong>
+                    <span>{{ request.dayType === 'HALF_DAY' ? 'Half day' : 'Full day' }}</span>
+                    @if (request.dayType === 'HALF_DAY' && request.halfDaySession) {
+                      <small>{{ request.halfDaySession }}</small>
+                    }
+                  </div>
+                </td>
+                <td>{{ request.startDate | date:'MMM d, y' }} - {{ request.endDate | date:'MMM d, y' }}</td>
+                <td>{{ request.days }}</td>
+                <td class="reason-cell">{{ request.reason }}</td>
+                <td>
+                  <span class="request-status" [class]="statusClass(request.status)">
+                    {{ request.status }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-group">
+                    @if (request.status !== 'Approved') {
+                      <button type="button" class="approve-btn" (click)="approve(request.id)">Approve</button>
+                    }
+                    @if (request.status !== 'Rejected') {
+                      <button type="button" class="reject-btn" (click)="reject(request.id)">Reject</button>
+                    }
+                    <button type="button" class="delete-btn" (click)="delete(request.id)">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination-container" aria-label="Table pagination">
+          <button
+            type="button"
+            class="pagination-btn prev-btn"
+            (click)="goToPreviousPage()"
+            [disabled]="!canPreviousPage()"
+          >
+            ← Previous
+          </button>
+
+          <span class="page-indicator">
+            Page {{ currentPage() }} of {{ totalPages() }}
+          </span>
+
+          <button
+            type="button"
+            class="pagination-btn next-btn"
+            (click)="goToNextPage()"
+            [disabled]="!canNextPage()"
+          >
+            Next →
+          </button>
+        </div>
+      }
+    }
+  </div>
+</section>

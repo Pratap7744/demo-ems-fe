@@ -1,0 +1,51 @@
+{
+  "info": {
+    "name": "Employee-Attendance-SME-Flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register Employee",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Lokesh\",\n  \"email\": \"lokesh@gmail.com\",\n  \"password\": \"Password123\",\n  \"role\": \"EMPLOYEE\",\n  \"designation\": \"Analyst\"\n}" },
+        "url": { "raw": "http://localhost:8081/auth/register", "host": ["http://localhost:8081"], "path": ["auth","register"] }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"lokesh@gmail.com\",\n  \"password\": \"Password123\"\n}" },
+        "url": { "raw": "http://localhost:8081/auth/login", "host": ["http://localhost:8081"], "path": ["auth","login"] }
+      }
+    },
+    {
+      "name": "Apply Leave (example)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" },{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"leaveType\": \"CASUAL\",\n  \"reason\": \"Family Function\",\n  \"dayType\": \"FULL_DAY\",\n  \"startDate\": \"2026-08-15\",\n  \"endDate\": \"2026-08-16\"\n}" },
+        "url": { "raw": "http://localhost:8081/leave/apply/{{employeeId}}", "host": ["http://localhost:8081"], "path": ["leave","apply","{{employeeId}}"] }
+      }
+    },
+    {
+      "name": "Get Balance",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "http://localhost:8081/balance/{{employeeId}}", "host": ["http://localhost:8081"], "path": ["balance","{{employeeId}}"] }
+      }
+    },
+    {
+      "name": "Approve Leave",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Authorization", "value": "Bearer {{managerToken}}" }],
+        "url": { "raw": "http://localhost:8081/leave/approve/{{leaveId}}", "host": ["http://localhost:8081"], "path": ["leave","approve","{{leaveId}}"] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+img {
+  display: block;
+}
+
+button,
+input {
+  font: inherit;
+}

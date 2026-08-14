@@ -1,0 +1,43 @@
+<aside [class.collapsed]="collapsed()">
+
+  <!-- ── TOP: Brand + collapse toggle ── -->
+  <div class="sidebar-header">
+    @if (!collapsed()) {
+      <!-- Expanded: logo mark + EMS name + collapse button -->
+      <div class="brand-row">
+        <div class="brand-mark">E</div>
+        <span class="brand-name">EMS</span>
+        <button class="icon-btn" (click)="toggle()" aria-label="Collapse sidebar" title="Collapse">
+          <lucide-icon name="panel-left-close" [size]="16"></lucide-icon>
+        </button>
+      </div>
+    } @else {
+      <!-- Collapsed: only the expand button -->
+      <button class="icon-btn expand-only" (click)="toggle()" aria-label="Expand sidebar" title="Expand">
+        <lucide-icon name="panel-left-open" [size]="16"></lucide-icon>
+      </button>
+    }
+  </div>
+
+  <!-- ── MIDDLE: Nav links ── -->
+  <nav>
+    @for (item of items; track item.route) {
+      <a [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-link"
+        [title]="collapsed() ? item.label : ''">
+        <lucide-icon [name]="item.icon" [size]="18" class="nav-icon"></lucide-icon>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <!-- ── BOTTOM: Logout ── -->
+  <div class="sidebar-footer">
+    <button class="logout-btn" (click)="logout()" [title]="collapsed() ? 'Logout' : ''">
+      <lucide-icon name="log-out" [size]="18" class="nav-icon"></lucide-icon>
+      <span class="nav-label">Logout</span>
+    </button>
+  </div>
+
+</aside>

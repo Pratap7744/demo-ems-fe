@@ -1,0 +1,12 @@
+<div class="layout-shell">
+  <!-- Sidebar: left, full height -->
+  <app-sidebar [items]="navItems()" />
+
+  <!-- Right side: navbar on top, page content below -->
+  <div class="layout-right">
+    <app-navbar />
+    <main class="layout-main">
+      <router-outlet />
+    </main>
+  </div>
+</div>

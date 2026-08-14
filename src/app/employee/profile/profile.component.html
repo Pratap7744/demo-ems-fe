@@ -1,0 +1,156 @@
+@if (loadingProfile()) {
+  <div class="flex items-center justify-center py-24 text-slate-400">Loading profile…</div>
+} @else if (profileError()) {
+  <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800 shadow-sm">
+    <p class="font-semibold">Profile failed to load</p>
+    <p class="mt-2">{{ profileError() }}</p>
+    <button type="button" (click)="retryLoad()" class="mt-4 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700">
+      Retry
+    </button>
+  </div>
+} @else if (profile(); as emp) {
+
+  <div class="mx-auto max-w-8xl">
+
+    <!-- Profile card -->
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <!-- Header: avatar, name, status -->
+      <div class="flex items-center gap-4 border-b border-slate-100 p-6">
+        <div class="relative">
+          <img
+            [src]="profileImage()"
+            alt="Profile photo"
+            class="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow-sm"
+          />
+          @if (isViewingOwnProfile) {
+            <label class="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white bg-slate-900 text-white shadow-md transition hover:bg-slate-700">
+              <input type="file" accept="image/*" class="hidden" (change)="onPhotoSelected($event)" />
+              <lucide-icon name="camera" [size]="14"></lucide-icon>
+            </label>
+          }
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <h1 class="truncate font-display text-lg font-bold text-slate-900">{{ emp.name }}</h1>
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              [class]="emp.active ? 'bg-teal-50 text-teal-700' : 'bg-rose-50 text-rose-600'">
+              <span class="h-1.5 w-1.5 rounded-full" [class]="emp.active ? 'bg-teal-500' : 'bg-rose-500'"></span>
+              {{ emp.active ? 'Active' : 'Deactivated' }}
+            </span>
+          </div>
+          <p class="mt-0.5 truncate text-sm text-slate-500">{{ emp.designation }} · {{ emp.role === 'MANAGER' ? 'Manager' : 'Employee' }}</p>
+        </div>
+
+        @if (isViewingOwnProfile) {
+          <div class="flex gap-2">
+            <button type="button" (click)="removePhoto()" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+              Remove photo
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- View mode: read-only fields + action buttons -->
+      @if (!editingDetails()) {
+        <div class="p-6">
+          <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <dt class="text-xs font-medium text-slate-500">Email</dt>
+              <dd class="mt-0.5 text-sm font-medium text-slate-900">{{ emp.email }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium text-slate-500">Designation</dt>
+              <dd class="mt-0.5 text-sm font-medium text-slate-900">{{ emp.designation }}</dd>
+            </div>
+          </dl>
+
+          <div class="mt-6 flex flex-wrap gap-2.5">
+            @if (isViewingOwnProfile || isManager) {
+              <button type="button" (click)="openEditDetails()"
+                class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                <lucide-icon name="pencil" [size]="15"></lucide-icon>
+                Edit Details
+              </button>
+            }
+
+            @if (isViewingOwnProfile) {
+              <button type="button" (click)="openChangePassword()"
+                class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                <lucide-icon name="key-round" [size]="15"></lucide-icon>
+                Change Password
+              </button>
+            }
+
+            @if (isManager && !isViewingOwnProfile && emp.active) {
+              <button type="button" (click)="deactivate()" [disabled]="deactivating()"
+                class="ml-auto flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50">
+                <lucide-icon name="user-x" [size]="15"></lucide-icon>
+                {{ deactivating() ? 'Deactivating…' : 'Deactivate' }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Edit details form: only visible when toggled on -->
+      @if (editingDetails()) {
+        <form [formGroup]="detailsForm" (ngSubmit)="saveDetails()" class="space-y-4 p-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Full name</label>
+            <input formControlName="name" type="text" autofocus
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Designation</label>
+            <input formControlName="designation" type="text"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10" />
+          </div>
+          <div class="flex gap-2.5 pt-1">
+            <button type="submit" [disabled]="detailsForm.invalid || savingDetails()"
+              class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50">
+              {{ savingDetails() ? 'Saving…' : 'Save Changes' }}
+            </button>
+            <button type="button" (click)="cancelEditDetails()"
+              class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-50">
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+
+    </div>
+
+    <!-- Change password: separate card, only visible when toggled on -->
+    @if (changingPassword()) {
+      <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-900">Change Password</h2>
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-4">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Current password</label>
+            <input formControlName="currentPassword" type="password" autofocus
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">New password</label>
+            <input formControlName="newPassword" type="password"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10" />
+          </div>
+          <div class="flex gap-2.5 pt-1">
+            <button type="submit" [disabled]="passwordForm.invalid || savingPassword()"
+              class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50">
+              {{ savingPassword() ? 'Updating…' : 'Update Password' }}
+            </button>
+            <button type="button" (click)="cancelChangePassword()"
+              class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-50">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+  </div>
+}

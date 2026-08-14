@@ -1,0 +1,19 @@
+<header class="navbar">
+  <!-- Left: page title area (empty slot for future breadcrumb) -->
+  <div class="navbar-left">
+    <span class="page-title">Dashboard</span>
+  </div>
+
+  <!-- Right: role badge + user menu -->
+  <div class="navbar-right">
+    <!-- Role badge -->
+    <span class="role-badge">
+      {{ authService.currentRole() === 'MANAGER' ? 'Manager' : 'Employee' }}
+    </span>
+
+    <!-- Avatar / user button -->
+    <div class="avatar" [title]="'Logged in as ' + authService.currentRole()">
+      {{ authService.currentRole() === 'MANAGER' ? 'M' : 'E' }}
+    </div>
+  </div>
+</header>
